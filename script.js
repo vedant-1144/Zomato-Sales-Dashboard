@@ -7,7 +7,10 @@ const data = [
 
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Load data from CSV file
+    // First display fallback data to ensure something appears
+    useSampleData();
+    
+    // Then try to load the actual data
     loadZomatoData();
     
     // Set up navigation active state
@@ -16,12 +19,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Load and process Zomato CSV data
 function loadZomatoData() {
+    console.log("Attempting to load Zomato data...");
+    
+    // Try to load the CSV file
     d3.csv("data/zomato.csv")
         .then(function(data) {
-            // Process data for each visualization
-            console.log("CSV data loaded successfully", data[0]);
+            console.log("CSV data loaded successfully:", data.length, "records");
             
-            // Process and render all charts
+            if (!data || data.length === 0) {
+                console.warn("CSV loaded but no data found");
+                return; // Keep using the sample data
+            }
+            
+            // Check data structure
+            console.log("First record:", data[0]);
+            
+            // Process and render all charts with real data
             const salesByCity = processSalesByCity(data);
             renderD3BarChart(salesByCity);
             
@@ -33,32 +46,49 @@ function loadZomatoData() {
         })
         .catch(function(error) {
             console.error("Error loading CSV file:", error);
-            // Fall back to sample data if CSV load fails
-            useSampleData();
+            // We're already using sample data from initial load
         });
 }
 
 // Process data for sales by city visualization
 function processSalesByCity(data) {
-    // Group data by city and sum up the sales (assuming 'cost' or similar field exists)
-    const cityGroups = d3.group(data, d => d.city || d.location_city || "Unknown");
+    console.log("Processing sales by city...");
     
-    let salesByCity = Array.from(cityGroups, ([city, restaurants]) => {
-        // Use average_cost_for_two as the sales metric
-        const totalSales = d3.sum(restaurants, d => 
-            parseFloat(d.average_cost_for_two) || 0);
-        return { city, sales: totalSales };
-    });
-    
-    // Sort by sales and take top 5
-    salesByCity.sort((a, b) => b.sales - a.sales);
-    return salesByCity.slice(0, 5); // Return top 5 cities by sales
+    try {
+        // Group data by location
+        const cityGroups = d3.group(data, d => d.location || "Unknown");
+        
+        let salesByCity = Array.from(cityGroups, ([city, restaurants]) => {
+            // Parse cost field with error handling
+            const totalSales = d3.sum(restaurants, d => {
+                const costField = d['approx_cost(for two people)'];
+                const cost = parseFloat(costField);
+                return isNaN(cost) ? 0 : cost;
+            });
+            
+            return { city, sales: totalSales };
+        });
+        
+        // Sort by sales and take top 5
+        salesByCity.sort((a, b) => b.sales - a.sales);
+        console.log("Processed sales by city:", salesByCity.slice(0, 5));
+        return salesByCity.slice(0, 5);
+    } catch (error) {
+        console.error("Error processing sales by city:", error);
+        return [
+            { city: 'Mumbai', sales: 20000 },
+            { city: 'Delhi', sales: 15000 },
+            { city: 'Bangalore', sales: 12000 },
+            { city: 'Chennai', sales: 10000 },
+            { city: 'Hyderabad', sales: 8000 }
+        ];
+    }
 }
 
 // Process data for online ordering vs table booking visualizations
 function processOrderingData(data) {
     // Get counts by city for online ordering and table booking
-    const cityGroups = d3.group(data, d => d.city || d.location_city || "Unknown");
+    const cityGroups = d3.group(data, d => d.location || "Unknown");
     
     let orderingData = {
         cities: [],
@@ -69,7 +99,7 @@ function processOrderingData(data) {
     // Process data for each city
     cityGroups.forEach((restaurants, city) => {
         const onlineCount = restaurants.filter(d => d.online_order === "Yes").length;
-        const tableCount = restaurants.filter(d => d.table_booking === "Yes").length;
+        const tableCount = restaurants.filter(d => d.book_table === "Yes").length;
         
         // Only include cities with some data
         if (onlineCount > 0 || tableCount > 0) {
@@ -94,12 +124,23 @@ function processOrderingData(data) {
         const top5Cities = cityTotals.slice(0, 5).map(item => item.city);
         
         // Filter data to include only top 5 cities
-        orderingData.onlineOrdering = orderingData.onlineOrdering.filter((_, i) => 
-            top5Cities.includes(orderingData.cities[i]));
-        orderingData.tableBooking = orderingData.tableBooking.filter((_, i) => 
-            top5Cities.includes(orderingData.cities[i]));
-        orderingData.cities = orderingData.cities.filter(city => 
-            top5Cities.includes(city));
+        const newData = {
+            cities: [],
+            onlineOrdering: [],
+            tableBooking: [],
+            totalOnline: orderingData.totalOnline,
+            totalTable: orderingData.totalTable
+        };
+        
+        for (let i = 0; i < orderingData.cities.length; i++) {
+            if (top5Cities.includes(orderingData.cities[i])) {
+                newData.cities.push(orderingData.cities[i]);
+                newData.onlineOrdering.push(orderingData.onlineOrdering[i]);
+                newData.tableBooking.push(orderingData.tableBooking[i]);
+            }
+        }
+        
+        orderingData = newData;
     }
     
     return orderingData;
@@ -108,7 +149,11 @@ function processOrderingData(data) {
 // Update summary metrics at the top of the dashboard
 function updateSummaryMetrics(data) {
     // Calculate total sales
-    const totalSales = d3.sum(data, d => parseFloat(d.average_cost_for_two) || 0);
+    const totalSales = d3.sum(data, d => {
+        const costField = d['approx_cost(for two people)'];
+        return parseFloat(costField) || 0;
+    });
+    
     document.querySelector(".summary-card:nth-child(1) .number").textContent = 
         "₹" + totalSales.toLocaleString();
     
@@ -118,12 +163,12 @@ function updateSummaryMetrics(data) {
         onlineOrders.toLocaleString();
     
     // Count table bookings
-    const tableBookings = data.filter(d => d.table_booking === "Yes").length;
+    const tableBookings = data.filter(d => d.book_table === "Yes").length;
     document.querySelector(".summary-card:nth-child(3) .number").textContent = 
         tableBookings.toLocaleString();
     
     // Count unique cities
-    const uniqueCities = new Set(data.map(d => d.city || d.location_city)).size;
+    const uniqueCities = new Set(data.map(d => d.location)).size;
     document.querySelector(".summary-card:nth-child(4) .number").textContent = 
         uniqueCities.toLocaleString();
 }
@@ -344,6 +389,8 @@ function initializeFusionCharts(orderingData) {
 
 // Fall back to sample data if CSV load fails
 function useSampleData() {
+    console.log("Using sample data for visualizations");
+    
     // Sample data for sales by city
     const salesByCity = [
         { city: 'Mumbai', sales: 20000 },
@@ -367,6 +414,12 @@ function useSampleData() {
     
     // Initialize FusionCharts with sample data
     initializeFusionCharts(orderingData);
+    
+    // Make sure summary metrics show at least the sample values
+    document.querySelector(".summary-card:nth-child(1) .number").textContent = "₹57,000";
+    document.querySelector(".summary-card:nth-child(2) .number").textContent = "8,400";
+    document.querySelector(".summary-card:nth-child(3) .number").textContent = "5,100";
+    document.querySelector(".summary-card:nth-child(4) .number").textContent = "5";
 }
 
 // Set up navigation active state and smooth scrolling
