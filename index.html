@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Analytics Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- FusionCharts Core -->
+    <script src="https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.js"></script>
+    <script src="https://cdn.fusioncharts.com/fusioncharts/latest/themes/fusioncharts.theme.fusion.js"></script>
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">Restaurant BI Dashboard</div>
+            <ul class="nav-links">
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#sales-by-city">Sales</a></li>
+                <li><a href="#ordering-patterns">Ordering Patterns</a></li>
+                <li><a href="#about">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="overview" class="section">
+        <div class="container">
+            <h1>Restaurant Business Intelligence Dashboard</h1>
+            <p class="description">Comprehensive analytics and visualizations for restaurant performance metrics</p>
+            
+            <div class="dashboard-summary">
+                <div class="summary-card">
+                    <h3>Total Sales</h3>
+                    <p class="number">₹57,000</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Online Orders</h3>
+                    <p class="number">8,400</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Table Bookings</h3>
+                    <p class="number">5,100</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Cities</h3>
+                    <p class="number">5</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="sales-by-city" class="section">
+        <div class="container">
+            <h2>Sales By City</h2>
+            <div class="dashboard-container">
+                <div class="chart-container">
+                    <h3>City-wise Sales Distribution</h3>
+                    <div id="d3-bar-chart"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="ordering-patterns" class="section">
+        <div class="container">
+            <h2>Online Order vs. Table Booking Analysis</h2>
+            <p class="description">
+                Analysis of online ordering patterns versus table bookings across different cities
+            </p>
+            
+            <div class="dashboard-container">
+                <div class="chart-container">
+                    <h3>Stacked Bar Chart</h3>
+                    <div id="stacked-bar-container"></div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>Percentage Distribution</h3>
+                    <div id="stacked-percent-container"></div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>Overall Ratio</h3>
+                    <div id="donut-container"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="section">
+        <div class="container">
+            <h2>About This Dashboard</h2>
+            <p>This Business Intelligence dashboard visualizes restaurant data including sales metrics, 
+            online orders vs. table bookings across multiple cities. The visualizations are powered by 
+            FusionCharts and D3.js.</p>
+            <p>The data analysis helps restaurant management make informed decisions about resource 
+            allocation, marketing strategies, and operational improvements.</p>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Restaurant Analytics Dashboard</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
