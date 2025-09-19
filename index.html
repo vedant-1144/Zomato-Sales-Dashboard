@@ -3,32 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Restaurant Analytics Dashboard</title>
+    <title>Zomato Sales Analytics Dashboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <!-- FusionCharts Core -->
     <script src="https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.js"></script>
     <script src="https://cdn.fusioncharts.com/fusioncharts/latest/themes/fusioncharts.theme.fusion.js"></script>
+    <!-- FusionMaps for location visualization -->
+    <script src="https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.maps.js"></script>
+    <script src="https://cdn.fusioncharts.com/fusioncharts/latest/maps/fusioncharts.india.js"></script>
     <!-- D3.js -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo">Restaurant BI Dashboard</div>
-            <ul class="nav-links">
-                <li><a href="#overview">Overview</a></li>
-                <li><a href="#sales-by-city">Sales</a></li>
-                <li><a href="#ordering-patterns">Ordering Patterns</a></li>
-                <li><a href="#about">About</a></li>
-            </ul>
-        </nav>
-    </header>
-
     <section id="overview" class="section">
         <div class="container">
-            <h1>Restaurant Business Intelligence Dashboard</h1>
-            <p class="description">Comprehensive analytics and visualizations for restaurant performance metrics</p>
-            
+            <h1>Restaurant BI Dashboard</h1>
             <div class="dashboard-summary">
                 <div class="summary-card">
                     <h3>Total Sales</h3>
@@ -50,6 +41,19 @@
         </div>
     </section>
 
+    <section id="location-map" class="section">
+        <div class="container">
+            <h2>Restaurant Location Map</h2>
+            <p class="description">Geographic distribution of restaurants across India</p>
+            <div class="dashboard-container">
+                <div class="chart-container full-width">
+                    <h3>Restaurant Density by Region</h3>
+                    <div id="location-map-container"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section id="sales-by-city" class="section">
         <div class="container">
             <h2>Sales By City</h2>
@@ -57,6 +61,23 @@
                 <div class="chart-container">
                     <h3>City-wise Sales Distribution</h3>
                     <div id="d3-bar-chart"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="restaurant-types" class="section">
+        <div class="container">
+            <h2>Restaurant Type Popularity</h2>
+            <p class="description">Distribution of restaurants by establishment type</p>
+            <div class="dashboard-container">
+                <div class="chart-container">
+                    <h3>Restaurant Types Distribution</h3>
+                    <div id="restaurant-type-pie"></div>
+                </div>
+                <div class="chart-container">
+                    <h3>Top Cuisine Types</h3>
+                    <div id="cuisine-type-chart"></div>
                 </div>
             </div>
         </div>
@@ -88,20 +109,9 @@
         </div>
     </section>
 
-    <section id="about" class="section">
-        <div class="container">
-            <h2>About This Dashboard</h2>
-            <p>This Business Intelligence dashboard visualizes restaurant data including sales metrics, 
-            online orders vs. table bookings across multiple cities. The visualizations are powered by 
-            FusionCharts and D3.js.</p>
-            <p>The data analysis helps restaurant management make informed decisions about resource 
-            allocation, marketing strategies, and operational improvements.</p>
-        </div>
-    </section>
-
     <footer>
         <div class="container">
-            <p>&copy; 2025 Restaurant Analytics Dashboard</p>
+            <p>&copy; 2025 Zomato Sales Analytics Dashboard</p>
         </div>
     </footer>
 

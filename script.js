@@ -41,6 +41,15 @@ function loadZomatoData() {
             const orderingData = processOrderingData(data);
             initializeFusionCharts(orderingData);
             
+            const locationData = processLocationData(data);
+            renderLocationMap(locationData);
+            
+            const restaurantTypeData = processRestaurantTypes(data);
+            renderRestaurantTypePie(restaurantTypeData);
+            
+            const cuisineData = processCuisineTypes(data);
+            renderCuisineChart(cuisineData);
+            
             // Update summary metrics
             updateSummaryMetrics(data);
         })
@@ -81,6 +90,149 @@ function processSalesByCity(data) {
             { city: 'Bangalore', sales: 12000 },
             { city: 'Chennai', sales: 10000 },
             { city: 'Hyderabad', sales: 8000 }
+        ];
+    }
+}
+
+// Process data for location map visualization
+function processLocationData(data) {
+    try {
+        // India state codes for FusionCharts
+        const stateMapping = {
+            'Delhi': '001',
+            'Maharashtra': '027', // Mumbai, Pune
+            'Karnataka': '017', // Bangalore
+            'Tamil Nadu': '031', // Chennai
+            'Telangana': '007', // Hyderabad
+            // Add more state mappings as needed
+        };
+        
+        // City to state mapping
+        const cityToState = {
+            'New Delhi': 'Delhi',
+            'Delhi': 'Delhi',
+            'Mumbai': 'Maharashtra',
+            'Pune': 'Maharashtra',
+            'Bangalore': 'Karnataka',
+            'Chennai': 'Tamil Nadu',
+            'Hyderabad': 'Telangana',
+            // Add more cities as needed
+        };
+        
+        // Count restaurants by state
+        const stateCounts = {};
+        
+        data.forEach(restaurant => {
+            // Try to match city to state
+            let location = restaurant.location || "";
+            let city = location.trim();
+            let state = cityToState[city] || "Unknown";
+            
+            // If we have a state mapping, add to count
+            if (state !== "Unknown") {
+                stateCounts[state] = (stateCounts[state] || 0) + 1;
+            }
+        });
+        
+        // Format for FusionCharts map
+        let mapData = [];
+        for (const [state, count] of Object.entries(stateCounts)) {
+            const id = stateMapping[state];
+            if (id) {
+                mapData.push({
+                    "id": id,
+                    "value": count,
+                    "showLabel": "1",
+                    "displayValue": `${state}: ${count}`
+                });
+            }
+        }
+        
+        return mapData;
+        
+    } catch (error) {
+        console.error("Error processing location data:", error);
+        // Return sample data
+        return [
+            { "id": "001", "value": "350", "showLabel": "1" }, // Delhi
+            { "id": "027", "value": "450", "showLabel": "1" }, // Maharashtra
+            { "id": "017", "value": "250", "showLabel": "1" }, // Karnataka
+            { "id": "031", "value": "180", "showLabel": "1" }, // Tamil Nadu
+            { "id": "007", "value": "200", "showLabel": "1" }  // Telangana
+        ];
+    }
+}
+
+// Process data for restaurant types visualization
+function processRestaurantTypes(data) {
+    try {
+        // Count restaurant types
+        const typeCounts = {};
+        
+        data.forEach(restaurant => {
+            let types = (restaurant.rest_type || "").split(",");
+            
+            types.forEach(type => {
+                const cleanType = type.trim();
+                if (cleanType) {
+                    typeCounts[cleanType] = (typeCounts[cleanType] || 0) + 1;
+                }
+            });
+        });
+        
+        // Convert to array and sort by count
+        let typeData = Object.entries(typeCounts)
+            .map(([type, count]) => ({ type, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 10); // Top 10 types
+            
+        return typeData;
+        
+    } catch (error) {
+        console.error("Error processing restaurant types:", error);
+        return [
+            { type: "Casual Dining", count: 450 },
+            { type: "Café", count: 350 },
+            { type: "Quick Bites", count: 300 },
+            { type: "Fine Dining", count: 150 },
+            { type: "Food Court", count: 120 }
+        ];
+    }
+}
+
+// Process data for cuisine types chart
+function processCuisineTypes(data) {
+    try {
+        // Count cuisine types
+        const cuisineCounts = {};
+        
+        data.forEach(restaurant => {
+            let cuisines = (restaurant.cuisines || "").split(",");
+            
+            cuisines.forEach(cuisine => {
+                const cleanCuisine = cuisine.trim();
+                if (cleanCuisine) {
+                    cuisineCounts[cleanCuisine] = (cuisineCounts[cleanCuisine] || 0) + 1;
+                }
+            });
+        });
+        
+        // Convert to array and sort by count
+        let cuisineData = Object.entries(cuisineCounts)
+            .map(([cuisine, count]) => ({ cuisine, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 10); // Top 10 cuisines
+            
+        return cuisineData;
+        
+    } catch (error) {
+        console.error("Error processing cuisine types:", error);
+        return [
+            { cuisine: "North Indian", count: 380 },
+            { cuisine: "Chinese", count: 320 },
+            { cuisine: "South Indian", count: 280 },
+            { cuisine: "Italian", count: 220 },
+            { cuisine: "Continental", count: 180 }
         ];
     }
 }
@@ -176,7 +328,10 @@ function updateSummaryMetrics(data) {
 // D3.js Bar Chart for City Sales
 function renderD3BarChart(data) {
     // Check if the chart container exists
-    if (!document.getElementById('d3-bar-chart')) return;
+    const container = document.getElementById('d3-bar-chart');
+    if (!container) return;
+    
+    console.log("Rendering D3 bar chart with data:", data);
     
     // Clear any existing chart
     d3.select("#d3-bar-chart").html("");
@@ -224,16 +379,16 @@ function renderD3BarChart(data) {
         .attr("y", d => y(d.sales))
         .attr("width", x.bandwidth())
         .attr("height", d => height - margin - y(d.sales))
-        .attr("fill", "#0088cc")
+        .attr("fill", "#CB202D")
         .attr("rx", 3)
         .attr("ry", 3)
         .on("mouseover", function() {
             d3.select(this)
-                .attr("fill", "#005580");
+                .attr("fill", "#E23744");
         })
         .on("mouseout", function() {
             d3.select(this)
-                .attr("fill", "#0088cc");
+                .attr("fill", "#CB202D");
         });
     
     // Add city sales labels
@@ -247,6 +402,229 @@ function renderD3BarChart(data) {
         .attr("text-anchor", "middle")
         .attr("font-size", "12px")
         .attr("fill", "#333");
+}
+
+// Render location map using FusionCharts
+function renderLocationMap(data) {
+    if (typeof FusionCharts === 'undefined') return;
+    
+    const container = document.getElementById('location-map-container');
+    if (!container) return;
+    
+    console.log("Rendering location map with data:", data);
+    
+    FusionCharts.ready(function() {
+        var mapChart = new FusionCharts({
+            type: 'india',
+            renderAt: 'location-map-container',
+            width: '100%',
+            height: '400',
+            dataFormat: 'json',
+            dataSource: {
+                "chart": {
+                    "caption": "Restaurant Distribution Across India",
+                    "subcaption": "Based on location data",
+                    "includevalueinlabels": "1",
+                    "labelsepchar": ": ",
+                    "entityFillHoverColor": "#FFF9C4",
+                    "theme": "fusion"
+                },
+                "colorrange": {
+                    "minvalue": "0",
+                    "startlabel": "Low",
+                    "endlabel": "High",
+                    "code": "#e6ebf8",
+                    "gradient": "1",
+                    "color": [
+                        {
+                            "maxvalue": "150",
+                            "displayvalue": "Low",
+                            "code": "#c7d6f5"
+                        },
+                        {
+                            "maxvalue": "300",
+                            "displayvalue": "Medium",
+                            "code": "#96b2e8"
+                        },
+                        {
+                            "maxvalue": "500",
+                            "displayvalue": "High",
+                            "code": "#5d87d0"
+                        }
+                    ]
+                },
+                "data": data
+            }
+        });
+        
+        mapChart.render();
+    });
+}
+
+// D3.js Pie Chart for Restaurant Types
+function renderRestaurantTypePie(data) {
+    const container = document.getElementById('restaurant-type-pie');
+    if (!container) return;
+    
+    console.log("Rendering restaurant type pie with data:", data);
+    
+    // Clear any existing chart
+    d3.select("#restaurant-type-pie").html("");
+    
+    // Chart dimensions
+    const width = 500, height = 320, margin = 40;
+    
+    // Radius calculation
+    const radius = Math.min(width, height) / 2 - margin;
+    
+    // Create SVG container
+    const svg = d3.select("#restaurant-type-pie")
+        .append("svg")
+        .attr("width", "100%")
+        .attr("height", height)
+        .attr("viewBox", `0 0 ${width} ${height}`)
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .append("g")
+        .attr("transform", `translate(${width/2}, ${height/2})`);
+
+    // Color scale - Zomato themed colors
+    const color = d3.scaleOrdinal()
+        .domain(data.map(d => d.type))
+        .range(["#CB202D", "#E23744", "#F54D5D", "#FF6B7A", "#FF8A94", "#FFB3BA", "#D4426E", "#B8425C", "#A03C4F", "#8B3547"]);
+
+    // Pie generator
+    const pie = d3.pie()
+        .value(d => d.count)
+        .sort(null);
+    
+    // Arc generator
+    const arc = d3.arc()
+        .innerRadius(radius * 0.4) // For donut chart effect
+        .outerRadius(radius);
+    
+    // Add arcs / slices
+    const slices = svg.selectAll(".arc")
+        .data(pie(data))
+        .enter()
+        .append("g")
+        .attr("class", "arc");
+
+    slices.append("path")
+        .attr("d", arc)
+        .attr("fill", d => color(d.data.type))
+        .attr("stroke", "white")
+        .style("stroke-width", "2px")
+        .style("opacity", 0.8)
+        .on("mouseover", function() {
+            d3.select(this)
+                .style("opacity", 1)
+                .attr("stroke", "#333");
+        })
+        .on("mouseout", function() {
+            d3.select(this)
+                .style("opacity", 0.8)
+                .attr("stroke", "white");
+        });
+
+    // Add labels
+    const arcLabel = d3.arc()
+        .innerRadius(radius * 0.7)
+        .outerRadius(radius * 0.7);
+        
+    slices.append("text")
+        .attr("transform", d => `translate(${arcLabel.centroid(d)})`)
+        .attr("text-anchor", "middle")
+        .text(d => {
+            // Only show label if segment is big enough
+            const percent = ((d.endAngle - d.startAngle) / (2 * Math.PI)) * 100;
+            if (percent < 5) return ""; // Skip small segments
+            return d.data.type;
+        })
+        .style("font-size", "10px")
+        .style("fill", "#333");
+    
+    // Add center text
+    svg.append("text")
+        .attr("text-anchor", "middle")
+        .attr("dy", "0em")
+        .style("font-size", "16px")
+        .style("font-weight", "bold")
+        .text("Restaurant");
+    
+    svg.append("text")
+        .attr("text-anchor", "middle")
+        .attr("dy", "1.2em")
+        .style("font-size", "16px")
+        .style("font-weight", "bold")
+        .text("Types");
+    
+    // Add legend
+    const legendContainer = d3.select("#restaurant-type-pie")
+        .append("div")
+        .attr("class", "legend-container")
+        .style("display", "flex")
+        .style("flex-wrap", "wrap")
+        .style("justify-content", "center")
+        .style("margin-top", "20px");
+    
+    data.forEach((d, i) => {
+        const legendItem = legendContainer.append("div")
+            .style("display", "flex")
+            .style("align-items", "center")
+            .style("margin-right", "15px")
+            .style("margin-bottom", "8px");
+            
+        legendItem.append("div")
+            .style("width", "12px")
+            .style("height", "12px")
+            .style("background-color", color(d.type))
+            .style("margin-right", "5px");
+            
+        legendItem.append("div")
+            .text(`${d.type} (${d.count})`)
+            .style("font-size", "12px");
+    });
+}
+
+// FusionCharts for Cuisine Types
+function renderCuisineChart(data) {
+    if (typeof FusionCharts === 'undefined') return;
+    
+    const container = document.getElementById('cuisine-type-chart');
+    if (!container) return;
+    
+    console.log("Rendering cuisine chart with data:", data);
+    
+    FusionCharts.ready(function() {
+        var cuisineChart = new FusionCharts({
+            type: 'bar2d',
+            renderAt: 'cuisine-type-chart',
+            width: '100%',
+            height: '320',
+            dataFormat: 'json',
+            dataSource: {
+                "chart": {
+                    "caption": "Top Cuisine Types",
+                    "yAxisName": "Number of Restaurants",
+                    "theme": "fusion",
+                    "paletteColors": "#5D87D0,#7CB5EC,#90ED7D,#F7A35C,#8085E9",
+                    "showValues": "1",
+                    "showLabels": "1",
+                    "rotateLabels": "1",
+                    "slantLabels": "1",
+                    "labelDisplay": "rotate",
+                    "baseFont": "Helvetica Neue,Arial",
+                    "showToolTip": "1"
+                },
+                "data": data.map(item => ({
+                    "label": item.cuisine,
+                    "value": item.count
+                }))
+            }
+        });
+        
+        cuisineChart.render();
+    });
 }
 
 // FusionCharts for Online vs Table Booking visualizations
@@ -282,12 +660,12 @@ function initializeFusionCharts(orderingData) {
                 "dataset": [
                     {
                         "seriesname": "Online Order",
-                        "color": "#5D62B5",
+                        "color": "#CB202D",
                         "data": orderingData.onlineOrdering.map(value => ({"value": value.toString()}))
                     },
                     {
                         "seriesname": "Table Booking",
-                        "color": "#29C3BE",
+                        "color": "#E23744",
                         "data": orderingData.tableBooking.map(value => ({"value": value.toString()}))
                     }
                 ]
@@ -321,12 +699,12 @@ function initializeFusionCharts(orderingData) {
                 "dataset": [
                     {
                         "seriesname": "Online Order",
-                        "color": "#5D62B5",
+                        "color": "#CB202D",
                         "data": orderingData.onlineOrdering.map(value => ({"value": value.toString()}))
                     },
                     {
                         "seriesname": "Table Booking",
-                        "color": "#29C3BE",
+                        "color": "#E23744",
                         "data": orderingData.tableBooking.map(value => ({"value": value.toString()}))
                     }
                 ]
@@ -414,6 +792,42 @@ function useSampleData() {
     
     // Initialize FusionCharts with sample data
     initializeFusionCharts(orderingData);
+    
+    // Sample data for location map
+    const locationData = [
+        { "id": "001", "value": "350", "showLabel": "1" }, // Delhi
+        { "id": "027", "value": "450", "showLabel": "1" }, // Maharashtra
+        { "id": "017", "value": "250", "showLabel": "1" }, // Karnataka
+        { "id": "031", "value": "180", "showLabel": "1" }, // Tamil Nadu
+        { "id": "007", "value": "200", "showLabel": "1" }  // Telangana
+    ];
+    
+    // Render location map
+    renderLocationMap(locationData);
+    
+    // Sample data for restaurant types
+    const restaurantTypeData = [
+        { type: "Casual Dining", count: 450 },
+        { type: "Café", count: 350 },
+        { type: "Quick Bites", count: 300 },
+        { type: "Fine Dining", count: 150 },
+        { type: "Food Court", count: 120 }
+    ];
+    
+    // Render restaurant type pie chart
+    renderRestaurantTypePie(restaurantTypeData);
+    
+    // Sample data for cuisine types
+    const cuisineData = [
+        { cuisine: "North Indian", count: 380 },
+        { cuisine: "Chinese", count: 320 },
+        { cuisine: "South Indian", count: 280 },
+        { cuisine: "Italian", count: 220 },
+        { cuisine: "Continental", count: 180 }
+    ];
+    
+    // Render cuisine chart
+    renderCuisineChart(cuisineData);
     
     // Make sure summary metrics show at least the sample values
     document.querySelector(".summary-card:nth-child(1) .number").textContent = "₹57,000";
